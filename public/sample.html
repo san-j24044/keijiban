@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Board - Interactive Sample</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons (via CDN for clean, modern icons) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Reset & CSS variables */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b0f19 0%, #111827 50%, #1e1b4b 100%);
+      --panel-bg: rgba(255, 255, 255, 0.03);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --panel-hover: rgba(255, 255, 255, 0.06);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --accent-color: #8b5cf6;
+      --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #ec4899 100%);
+      --accent-hover-gradient: linear-gradient(135deg, #c084fc 0%, #a78bfa 50%, #f472b6 100%);
+      --success: #10b981;
+      --danger: #ef4444;
+      --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+
+    /* Background glow decorations */
+    .glow-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    .glow-sphere {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+    }
+
+    .glow-1 {
+      width: 400px;
+      height: 400px;
+      background: #8b5cf6;
+      top: -100px;
+      left: -100px;
+      animation: float 20s infinite alternate;
+    }
+
+    .glow-2 {
+      width: 500px;
+      height: 500px;
+      background: #ec4899;
+      bottom: -150px;
+      right: -100px;
+      animation: float 25s infinite alternate-reverse;
+    }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(50px, 50px) scale(1.1); }
+    }
+
+    /* Container layout */
+    .app-container {
+      width: 100%;
+      max-width: 800px;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .logo-icon {
+      background: var(--accent-gradient);
+      padding: 0.75rem;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    }
+
+    .logo-icon i {
+      color: white;
+      font-size: 1.5rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.05em;
+    }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      font-weight: 300;
+    }
+
+    /* Main Dashboard Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    /* Glassmorphism Panel */
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: var(--card-shadow);
+      transition: var(--transition-smooth);
+    }
+
+    .glass-panel:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      padding-left: 0.25rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+      font-size: 1.1rem;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 0.8rem 1rem 0.8rem 2.7rem;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: var(--transition-smooth);
+      outline: none;
+    }
+
+    textarea {
+      padding-left: 1rem;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Modern Dropdown Override */
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1.25rem;
+      padding-right: 2.5rem;
+    }
+
+    /* Custom tags container */
+    .tag-container {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tag-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .tag-btn.active, .tag-btn:hover {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    }
+
+    /* Primary Action Button */
+    .btn-submit {
+      width: 100%;
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+      transition: var(--transition-smooth);
+    }
+
+    .btn-submit:hover {
+      background: var(--accent-hover-gradient);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    /* Messages List Container */
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .board-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      background: rgba(139, 92, 246, 0.15);
+      color: #c084fc;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    /* Individual Message Cards */
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      position: relative;
+      transition: var(--transition-smooth);
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.75rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+      font-size: 1rem;
+      box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .username {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .timestamp {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .category-tag {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Tag styles based on category */
+    .tag-general { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .tag-idea { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
+    .tag-question { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
+    .tag-announcement { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+    .card-body {
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      white-space: pre-wrap;
+    }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 0.75rem;
+    }
+
+    .action-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: var(--transition-smooth);
+      font-family: inherit;
+    }
+
+    .action-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .action-btn.like-btn:hover {
+      color: #ec4899;
+    }
+
+    .action-btn.liked {
+      color: #ec4899;
+      font-weight: 600;
+    }
+
+    .action-btn.delete-btn:hover {
+      color: var(--danger);
+    }
+
+    /* Empty state styling */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      opacity: 0.3;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Toast notification styling */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--accent-color);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: white;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-success i {
+      color: var(--success);
+    }
+
+    .toast-info i {
+      color: var(--accent-color);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Decorative dynamic glow circles -->
+  <div class="glow-container">
+    <div class="glow-sphere glow-1"></div>
+    <div class="glow-sphere glow-2"></div>
+  </div>
+
+  <div class="app-container">
+    
+    <header>
+      <div class="logo-container">
+        <div class="logo-icon">
+          <i data-lucide="message-square-code"></i>
+        </div>
+      </div>
+      <h1>Modern Feedback Board</h1>
+      <p>ローカルで動作する美しいダッシュボード掲示板サンプル</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- Create Post Panel -->
+      <section class="glass-panel">
+        <form id="post-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="username">お名前</label>
+              <div class="input-wrapper">
+                <i data-lucide="user"></i>
+                <input type="text" id="username" placeholder="匿名ユーザー" maxlength="20" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="category">カテゴリー</label>
+              <div class="input-wrapper">
+                <i data-lucide="tag"></i>
+                <select id="category">
+                  <option value="general">一般 (General)</option>
+                  <option value="idea">アイデア (Idea)</option>
+                  <option value="question">質問 (Question)</option>
+                  <option value="announcement">お知らせ (Announcement)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="message">メッセージ</label>
+            <textarea id="message" placeholder="ここへ自由にメッセージを入力してください..." maxlength="500" required></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit">
+            <i data-lucide="send"></i>
+            投稿する
+          </button>
+        </form>
+      </section>
+
+      <!-- Message List Panel -->
+      <section class="glass-panel">
+        <div class="board-header">
+          <div class="board-title">
+            <i data-lucide="feed"></i> フィード 
+            <span class="badge" id="post-count">0 件</span>
+          </div>
+          
+          <!-- Category Filters -->
+          <div class="tag-container" id="filter-container">
+            <button class="tag-btn active" data-filter="all">すべて</button>
+            <button class="tag-btn" data-filter="general">一般</button>
+            <button class="tag-btn" data-filter="idea">アイデア</button>
+            <button class="tag-btn" data-filter="question">質問</button>
+            <button class="tag-btn" data-filter="announcement">お知らせ</button>
+          </div>
+        </div>
+
+        <div id="feed-container" class="feed">
+          <!-- Dynamically inserted posts will appear here -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Dynamic notification toast -->
+  <div id="toast" class="toast toast-success">
+    <i data-lucide="check-circle-2"></i>
+    <span id="toast-message">操作が完了しました。</span>
+  </div>
+
+  <script>
+    // App State Management
+    let state = {
+      posts: [],
+      filter: 'all',
+      likedPosts: new Set()
+    };
+
+    // DOM Elements
+    const postForm = document.getElementById('post-form');
+    const usernameInput = document.getElementById('username');
+    const categorySelect = document.getElementById('category');
+    const messageInput = document.getElementById('message');
+    const feedContainer = document.getElementById('feed-container');
+    const postCountBadge = document.getElementById('post-count');
+    const filterContainer = document.getElementById('filter-container');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+
+    // Sample initial data if local storage is empty
+    const INITIAL_SAMPLE_POSTS = [
+      {
+        id: '1',
+        username: 'アンティグラビティ',
+        category: 'announcement',
+        message: 'こちらはGoogle Apps Scriptとは関係のない、モダンデザインのサンプルHTMLです！\nCSSのグラデーションやGlassmorphism（ガラス風デザイン）を適用し、レスポンシブにも対応しています。ローカルストレージを使って投稿を保存可能です。',
+        timestamp: new Date(Date.now() - 3600000 * 2).toISOString(), // 2 hours ago
+        likes: 5
+      },
+      {
+        id: '2',
+        username: '開発者A',
+        category: 'idea',
+        message: 'この掲示板のバックエンドをGAS (Google Apps Script) の Web App API やスプレッドシートと連携させれば、完全無料のデータベース付きWeb掲示板が作れそうですね！💡',
+        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        likes: 12
+      }
+    ];
+
+    // Initialize the application
+    function init() {
+      // Initialize icons
+      lucide.createIcons();
+
+      // Load data from LocalStorage
+      const savedPosts = localStorage.getItem('sample_board_posts');
+      const savedLikes = localStorage.getItem('sample_board_likes');
+      
+      if (savedPosts) {
+        state.posts = JSON.parse(savedPosts);
+      } else {
+        state.posts = INITIAL_SAMPLE_POSTS;
+        saveToLocalStorage();
+      }
+
+      if (savedLikes) {
+        state.likedPosts = new Set(JSON.parse(savedLikes));
+      }
+
+      setupEventListeners();
+      render();
+    }
+
+    // Event Listeners Configuration
+    function setupEventListeners() {
+      // Form Submission
+      postForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        createPost();
+      });
+
+      // Filter Clicks
+      filterContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('tag-btn')) {
+          // Update active filter style
+          document.querySelectorAll('#filter-container .tag-btn').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          e.target.classList.add('active');
+
+          // Update state and render
+          state.filter = e.target.getAttribute('data-filter');
+          render();
+        }
+      });
+    }
+
+    // Save state to Local Storage
+    function saveToLocalStorage() {
+      localStorage.setItem('sample_board_posts', JSON.stringify(state.posts));
+      localStorage.setItem('sample_board_likes', JSON.stringify(Array.from(state.likedPosts)));
+    }
+
+    // Show Toast Notification
+    function showNotification(message, type = 'success') {
+      toastMessage.textContent = message;
+      toast.className = `toast toast-${type} show`;
+      
+      // Update the icon inside toast dynamically
+      const icon = toast.querySelector('i');
+      if (type === 'success') {
+        icon.setAttribute('data-lucide', 'check-circle-2');
+        toast.style.borderColor = 'var(--success)';
+      } else {
+        icon.setAttribute('data-lucide', 'info');
+        toast.style.borderColor = 'var(--accent-color)';
+      }
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Action: Create Post
+    function createPost() {
+      const username = usernameInput.value.trim() || '匿名ユーザー';
+      const category = categorySelect.value;
+      const message = messageInput.value.trim();
+
+      if (!message) return;
+
+      const newPost = {
+        id: Date.now().toString(),
+        username,
+        category,
+        message,
+        timestamp: new Date().toISOString(),
+        likes: 0
+      };
+
+      state.posts.unshift(newPost); // Add to the top of feed
+      saveToLocalStorage();
+      
+      // Reset input form
+      messageInput.value = '';
+      
+      render();
+      showNotification('メッセージを投稿しました！');
+    }
+
+    // Action: Toggle Like
+    window.toggleLike = function(postId) {
+      const post = state.posts.find(p => p.id === postId);
+      if (!post) return;
+
+      if (state.likedPosts.has(postId)) {
+        state.likedPosts.delete(postId);
+        post.likes = Math.max(0, post.likes - 1);
+      } else {
+        state.likedPosts.add(postId);
+        post.likes += 1;
+      }
+
+      saveToLocalStorage();
+      render();
+    };
+
+    // Action: Delete Post
+    window.deletePost = function(postId) {
+      if (confirm('この投稿を削除してもよろしいですか？')) {
+        state.posts = state.posts.filter(p => p.id !== postId);
+        state.likedPosts.delete(postId);
+        saveToLocalStorage();
+        render();
+        showNotification('投稿を削除しました。', 'info');
+      }
+    };
+
+    // Utility: Date Formatter
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+
+      if (diffMins < 1) return 'たった今';
+      if (diffMins < 60) return `${diffMins}分前`;
+      if (diffHours < 24) return `${diffHours}時間前`;
+      
+      return date.toLocaleDateString('ja-JP', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Render logic
+    function render() {
+      const filteredPosts = state.posts.filter(post => {
+        if (state.filter === 'all') return true;
+        return post.category === state.filter;
+      });
+
+      // Update badge count
+      postCountBadge.textContent = `${filteredPosts.length} 件`;
+
+      if (filteredPosts.length === 0) {
+        feedContainer.innerHTML = `
+          <div class="empty-state">
+            <i data-lucide="message-square-off"></i>
+            <p>投稿がありません。最初のメッセージを書いてみましょう！</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      feedContainer.innerHTML = filteredPosts.map(post => {
+        const isLiked = state.likedPosts.has(post.id);
+        const avatarLetter = post.username.charAt(0).toUpperCase();
+        
+        return `
+          <div class="card" data-id="${post.id}">
+            <div class="card-header">
+              <div class="user-info">
+                <div class="avatar">${avatarLetter}</div>
+                <div class="user-details">
+                  <span class="username">${escapeHTML(post.username)}</span>
+                  <span class="timestamp">${formatDate(post.timestamp)}</span>
+                </div>
+              </div>
+              <span class="category-tag tag-${post.category}">
+                ${getCategoryLabel(post.category)}
+              </span>
+            </div>
+            <div class="card-body">${escapeHTML(post.message)}</div>
+            <div class="card-actions">
+              <button class="action-btn like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.id}')">
+                <i data-lucide="heart" ${isLiked ? 'fill="#ec4899"' : ''}></i>
+                <span>${post.likes}</span>
+              </button>
+              <button class="action-btn delete-btn" onclick="deletePost('${post.id}')">
+                <i data-lucide="trash-2"></i>
+                <span>削除</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Refresh dynamic icons
+      lucide.createIcons();
+    }
+
+    // Helpers
+    function getCategoryLabel(category) {
+      const labels = {
+        general: '一般',
+        idea: 'アイデア',
+        question: '質問',
+        announcement: 'お知らせ'
+      };
+      return labels[category] || category;
+    }
+
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    // Run the app
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
