@@ -2,7 +2,7 @@ const SHEET_NAME = 'posts';
 
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
+  const sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     throw new Error('Sheet "' + SHEET_NAME + '" not found. Please create it.');
   }
@@ -11,6 +11,7 @@ function getSheet() {
 
 function doGet(e) {
   let response = { success: false };
+
   try {
     const params = e.parameter || {};
     const mode = params.mode;
@@ -44,7 +45,7 @@ function readPosts() {
     return { success: true, posts: [] };
   }
 
-  const headers = data[0]; // id, username, category, message, timestamp, likes
+  const headers = data[0];
   const posts = [];
 
   for (let i = 1; i < data.length; i++) {
@@ -73,12 +74,12 @@ function createPost(params) {
   const timestamp = new Date().toISOString();
   const likes = 0;
 
-  // カラム順: id, username, category, message, timestamp, likes
+  // Column order: id, username, category, message, timestamp, likes
   sheet.appendRow([id, username, category, message, timestamp, likes]);
 
-  return { 
-    success: true, 
-    post: { id, username, category, message, timestamp, likes } 
+  return {
+    success: true,
+    post: { id, username, category, message, timestamp, likes }
   };
 }
 
@@ -90,14 +91,13 @@ function likePost(params) {
 
   const sheet = getSheet();
   const data = sheet.getDataRange().getValues();
-  
+
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === id) {
-      const rowIndex = i + 1; // 1-based index
+      const rowIndex = i + 1;
       const currentLikes = Number(data[i][5]) || 0;
       const newLikes = currentLikes + 1;
-      
-      // likesは6列目 (F列)
+
       sheet.getRange(rowIndex, 6).setValue(newLikes);
       return { success: true, id: id, likes: newLikes };
     }
