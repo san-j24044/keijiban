@@ -1,5 +1,16 @@
 const SHEET_NAME = 'posts';
 
+function setup() {
+  getSheet();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let settingsSheet = ss.getSheetByName('settings');
+  if (!settingsSheet) {
+    settingsSheet = ss.insertSheet('settings');
+    settingsSheet.getRange('A2').setValue('OpenRouter API Key');
+    settingsSheet.getRange('B2').setValue('');
+  }
+}
+
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(SHEET_NAME);
