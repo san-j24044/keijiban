@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GAS 掲示板</title>
+  <title>J24044の掲示板</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -406,6 +406,44 @@
         width: 100%;
       }
     }
+    .simplified-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px dashed rgba(34, 197, 94, 0.3);
+    }
+
+    .simplified-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .simplified-header i {
+      width: 14px;
+      height: 14px;
+    }
+
+    .simplified-content {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #f8fafc;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
   </style>
 </head>
 <body>
@@ -414,7 +452,7 @@
       <div class="title">
         <div class="title-icon"><i data-lucide="messages-square"></i></div>
         <div>
-          <h1>GAS 掲示板</h1>
+          <h1>J24044の掲示板</h1>
           <p>Google Apps Script とスプレッドシートに保存する掲示板です。</p>
         </div>
       </div>
@@ -490,7 +528,9 @@
       posts: [],
       filter: 'all',
       likedPosts: new Set(JSON.parse(localStorage.getItem('gas_board_liked_ids') || '[]')),
-      isLoading: false
+      isLoading: false,
+      simplified: {},
+      simplifying: new Set()
     };
 
     const categoryLabels = {
@@ -644,6 +684,26 @@
       }
     };
 
+    window.simplifyPost = async function simplifyPost(id) {
+      if (state.simplifying.has(id)) return;
+      if (state.simplified[id]) return;
+
+      state.simplifying.add(id);
+      render();
+
+      try {
+        const result = await fetchJson({ mode: 'simplify', id });
+        state.simplified[id] = result.simplified;
+        showToast('やさしい言葉に変換しました。', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast(error.message, 'error');
+      } finally {
+        state.simplifying.delete(id);
+        render();
+      }
+    };
+
     function normalizePosts(posts) {
       return posts
         .map((post) => ({
@@ -678,6 +738,8 @@
 
       feed.innerHTML = posts.map((post) => {
         const liked = state.likedPosts.has(post.id);
+        const isSimplifying = state.simplifying.has(post.id);
+        const hasSimplified = !!state.simplified[post.id];
         return `
           <article class="post">
             <div class="post-header">
@@ -688,10 +750,23 @@
               <span class="category ${post.category}">${categoryLabels[post.category]}</span>
             </div>
             <div class="message">${escapeHTML(post.message)}</div>
+            ${hasSimplified ? `
+              <div class="simplified-box">
+                <div class="simplified-header">
+                  <i data-lucide="sparkles"></i>
+                  <span>やさしい言葉</span>
+                </div>
+                <div class="simplified-content">${escapeHTML(state.simplified[post.id])}</div>
+              </div>
+            ` : ''}
             <div class="post-actions">
               <button type="button" class="action-button ${liked ? 'liked' : ''}" onclick="likePost('${escapeAttribute(post.id)}')" ${liked ? 'disabled' : ''}>
                 <i data-lucide="heart" ${liked ? 'fill="currentColor"' : ''}></i>
                 <span>${post.likes}</span>
+              </button>
+              <button type="button" class="action-button simplify-button" onclick="simplifyPost('${escapeAttribute(post.id)}')" ${isSimplifying || hasSimplified ? 'disabled' : ''}>
+                <i data-lucide="${isSimplifying ? 'loader-2' : 'sparkles'}" class="${isSimplifying ? 'spin' : ''}"></i>
+                <span>${isSimplifying ? '変換中...' : (hasSimplified ? '変換済み' : 'やさしい言葉に変換')}</span>
               </button>
               <button type="button" class="action-button delete-button" onclick="deletePost('${escapeAttribute(post.id)}')">
                 <i data-lucide="trash-2"></i>

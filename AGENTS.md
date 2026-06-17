@@ -29,7 +29,10 @@ gas/
 ## スプレッドシート
 - GAS はスプレッドシートに紐づいていることを前提にする
 - スプレッドシートの取得には下記を使う
-const ss = SpreadsheetApp.getActiveSpreadsheet();
+`const ss = SpreadsheetApp.getActiveSpreadsheet();`
+- 使用するシートの構成：
+  - `posts` シート：掲示板の投稿データを保存します。
+  - `settings` シート：B2セルに OpenRouter の API キー（`openai/gpt-oss-120b:free` 用）を格納します。
 - シートの追加はユーザーが実施する
 - シートの1行目はカラム名を入れる想定にする
 - プログラム開発でシートの追加が必要になった時は、ユーザーにそのことを伝える
@@ -42,7 +45,12 @@ const ss = SpreadsheetApp.getActiveSpreadsheet();
 - 本来 POST である通信も GET で送る
 - 本来 body に入れる内容も GET パラメーターに付与する
 - GAS 側では `doGet` で受信し、`mode` パラメーターで処理を分岐する
-- 例: `?mode=list_view` / `?mode=edit_item`
+- 例:
+  - `?mode=read` : 投稿一覧を取得します。
+  - `?mode=create` : 投稿を新規登録します。
+  - `?mode=like` : 指定したIDの投稿のいいね数を増やします。
+  - `?mode=delete` : 指定したIDの投稿を削除します。
+  - `?mode=simplify` : 指定したIDの投稿メッセージを OpenRouter API で「やさしい言葉」に変換します。
 
 ## ユーザーから GAS + 静的フロントでは実装が難しい要求を受けた場合
 - 制約を短く説明する

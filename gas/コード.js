@@ -24,6 +24,8 @@ function doGet(e) {
       response = likePost(params);
     } else if (mode === 'delete') {
       response = deletePost(params);
+    } else if (mode === 'simplify') {
+      response = simplifyPost(params);
     } else {
       response.error = 'Invalid mode: ' + mode;
     }
@@ -124,4 +126,93 @@ function deletePost(params) {
   }
 
   return { success: false, error: 'Post with ID ' + id + ' not found.' };
+}
+
+function simplifyPost(params) {
+  const id = params.id;
+  if (!id) {
+    return { success: false, error: 'ID is required.' };
+  }
+
+  const sheet = getSheet();
+  const data = sheet.getDataRange().getValues();
+  let postMessage = '';
+
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === id) {
+      postMessage = data[i][3];
+      break;
+    }
+  }
+
+  if (!postMessage) {
+    return { success: false, error: 'Post with ID ' + id + ' not found.' };
+  }
+
+  // 利用元で変数宣言
+  const messages = [
+    { role: 'system', content: 'あなたは入力された文章を、小学生でも理解できるような「やさしい日本語」に変換するAIアシスタントです。漢字にはなるべくフリガナ（ひらがな）を付け、難しい言葉は簡単な言葉に言い換えてください。出力は変換後の日本語文章のみにしてください。' },
+    { role: 'user', content: '本日の会議は15時から開始します。遅れないようにお願いします。' },
+    { role: 'assistant', content: 'きょうのミーティングは、ごご3じからはじまります。おわらないように、じかんまでにあつまってね。' },
+    { role: 'user', content: postMessage }
+  ];
+
+  try {
+    const simplifiedText = callOpenRouter(messages);
+    return { success: true, simplified: simplifiedText };
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+const callOpenRouter = (messages) => {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const settingsSheet = ss.getSheetByName('settings');
+  if (!settingsSheet) {
+    throw new Error('Sheet "settings" not found.');
+  }
+  const apiKey = settingsSheet.getRange('B2').getValue();
+  if (!apiKey) {
+    throw new Error('API Key is empty in "settings" sheet cell B2.');
+  }
+
+  const model = 'openai/gpt-oss-120b:free';
+
+  const url = 'https://openrouter.ai/api/v1/chat/completions';
+
+  const payload = {
+    model,
+    messages: messages,
+    // 任意
+    temperature: 0.7,
+    max_tokens: 512
+  };
+
+  const headers = {
+    'Authorization': 'Bearer ' + apiKey,
+    'Content-Type': 'application/json',
+    'HTTP-Referer': 'https://script.google.com/',
+    'X-Title': 'GAS OpenRouter Sample'
+  };
+
+  const options = {
+    method: 'post',
+    headers,
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  const res = UrlFetchApp.fetch(url, options);
+  const status = res.getResponseCode();
+  const text = res.getContentText();
+
+  if (status < 200 || status >= 300) {
+    throw new Error('OpenRouter API Error: HTTP ' + status + '\n' + text);
+  }
+
+  const json = JSON.parse(text);
+
+  const content = json?.choices?.[0]?.message?.content ?? '';
+  Logger.log(content);
+  return content;
 }
