@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J24044の掲示板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f172a;
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-strong: rgba(255, 255, 255, 0.08);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #f8fafc;
+      --muted: #a7b0c0;
+      --accent: #22c55e;
+      --accent-strong: #16a34a;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #38bdf8;
+      --shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 28px 16px;
+      background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.18), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.15), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(920px, 100%);
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-icon {
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--info));
+      color: #082f20;
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 4vw, 2.45rem);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    header p {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .refresh-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.74);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .form-panel {
+      padding: 18px;
+    }
+
+    .feed-panel {
+      min-height: 360px;
+      padding: 18px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(2, 6, 23, 0.42);
+      color: var(--text);
+      outline: none;
+      padding: 10px 12px;
+    }
+
+    textarea {
+      min-height: 132px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(34, 197, 94, 0.8);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+    }
+
+    .submit-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 46px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #052e16;
+      font-weight: 700;
+    }
+
+    .submit-button:hover:not(:disabled) {
+      background: var(--accent-strong);
+      color: white;
+    }
+
+    .submit-button:disabled,
+    .refresh-button:disabled,
+    .action-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .feed-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+
+    .count {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.13);
+      color: #7dd3fc;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-button {
+      min-height: 34px;
+      padding: 0 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .filter-button.active {
+      border-color: rgba(34, 197, 94, 0.7);
+      background: rgba(34, 197, 94, 0.16);
+      color: #86efac;
+    }
+
+    .feed {
+      display: grid;
+      gap: 12px;
+    }
+
+    .post {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 14px;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .user {
+      min-width: 0;
+    }
+
+    .username {
+      overflow-wrap: anywhere;
+      font-weight: 700;
+    }
+
+    .time {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .category {
+      flex: none;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .category.general {
+      background: rgba(56, 189, 248, 0.15);
+      color: #7dd3fc;
+    }
+
+    .category.idea {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+    }
+
+    .category.question {
+      background: rgba(245, 158, 11, 0.17);
+      color: #fcd34d;
+    }
+
+    .category.announcement {
+      background: rgba(239, 68, 68, 0.16);
+      color: #fca5a5;
+    }
+
+    .message {
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      line-height: 1.65;
+    }
+
+    .post-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .action-button:hover:not(:disabled) {
+      color: var(--text);
+    }
+
+    .action-button.liked {
+      color: #fb7185;
+      font-weight: 700;
+    }
+
+    .delete-button:hover:not(:disabled) {
+      color: var(--danger);
+    }
+
+    .empty,
+    .loading {
+      display: grid;
+      place-items: center;
+      min-height: 220px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      max-width: min(420px, calc(100vw - 36px));
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(16px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      border-color: rgba(34, 197, 94, 0.7);
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, 0.75);
+    }
+
+    @media (max-width: 760px) {
+      body {
+        padding-top: 18px;
+      }
+
+      header,
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .refresh-button {
+        width: 100%;
+      }
+    }
+    .simplified-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.08);
+      border: 1px dashed rgba(34, 197, 94, 0.3);
+    }
+
+    .simplified-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .simplified-header i {
+      width: 14px;
+      height: 14px;
+    }
+
+    .simplified-content {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #f8fafc;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="title">
+        <div class="title-icon"><i data-lucide="messages-square"></i></div>
+        <div>
+          <h1>J24044の掲示板</h1>
+          <p>Google Apps Script とスプレッドシートに保存する掲示板です。</p>
+        </div>
+      </div>
+      <button type="button" class="refresh-button" id="refresh-button">
+        <i data-lucide="refresh-cw"></i>
+        再読み込み
+      </button>
+    </header>
+
+    <div class="layout">
+      <section class="panel form-panel" aria-label="投稿フォーム">
+        <form id="post-form">
+          <div class="field">
+            <label for="username">名前</label>
+            <input type="text" id="username" maxlength="20" placeholder="匿名ユーザー">
+          </div>
+
+          <div class="field">
+            <label for="category">カテゴリー</label>
+            <select id="category">
+              <option value="general">一般</option>
+              <option value="idea">アイデア</option>
+              <option value="question">質問</option>
+              <option value="announcement">お知らせ</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="message">メッセージ</label>
+            <textarea id="message" maxlength="500" placeholder="メッセージを入力してください" required></textarea>
+          </div>
+
+          <button type="submit" class="submit-button" id="submit-button">
+            <i data-lucide="send"></i>
+            スプレッドシートへ投稿
+          </button>
+        </form>
+      </section>
+
+      <section class="panel feed-panel" aria-label="投稿一覧">
+        <div class="feed-header">
+          <div class="feed-title">
+            <i data-lucide="database"></i>
+            投稿一覧
+          </div>
+          <span class="count" id="post-count">0件</span>
+        </div>
+
+        <div class="filters" id="filters">
+          <button type="button" class="filter-button active" data-filter="all">すべて</button>
+          <button type="button" class="filter-button" data-filter="general">一般</button>
+          <button type="button" class="filter-button" data-filter="idea">アイデア</button>
+          <button type="button" class="filter-button" data-filter="question">質問</button>
+          <button type="button" class="filter-button" data-filter="announcement">お知らせ</button>
+        </div>
+
+        <div id="feed" class="feed">
+          <div class="loading">読み込み中...</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <i data-lucide="info"></i>
+    <span id="toast-message"></span>
+  </div>
+
+  <script>
+    const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxiMj7j7WJTb1A5L-hBzEvqOMmcn3aicEUt19DeQMd1lGNIKTGZigOmQWQ3m7nyw-Jj/exec';
+
+    const state = {
+      posts: [],
+      filter: 'all',
+      likedPosts: new Set(JSON.parse(localStorage.getItem('gas_board_liked_ids') || '[]')),
+      isLoading: false,
+      simplified: {},
+      simplifying: new Set()
+    };
+
+    const categoryLabels = {
+      general: '一般',
+      idea: 'アイデア',
+      question: '質問',
+      announcement: 'お知らせ'
+    };
+
+    const postForm = document.getElementById('post-form');
+    const usernameInput = document.getElementById('username');
+    const categorySelect = document.getElementById('category');
+    const messageInput = document.getElementById('message');
+    const submitButton = document.getElementById('submit-button');
+    const refreshButton = document.getElementById('refresh-button');
+    const filters = document.getElementById('filters');
+    const feed = document.getElementById('feed');
+    const postCount = document.getElementById('post-count');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+
+    function init() {
+      lucide.createIcons();
+
+      postForm.addEventListener('submit', handleSubmit);
+      refreshButton.addEventListener('click', fetchPosts);
+      filters.addEventListener('click', handleFilterClick);
+
+      fetchPosts();
+    }
+
+    async function fetchJson(params) {
+      const url = `${GAS_API_URL}?${new URLSearchParams(params).toString()}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors',
+        redirect: 'follow',
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(`通信に失敗しました (${response.status})`);
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'GASで処理に失敗しました');
+      }
+      return result;
+    }
+
+    async function fetchPosts() {
+      setLoading(true);
+      try {
+        const result = await fetchJson({ mode: 'read', t: Date.now().toString() });
+        state.posts = normalizePosts(result.posts || []);
+        render();
+      } catch (error) {
+        console.error(error);
+        feed.innerHTML = `
+          <div class="empty">
+            <div>
+              <p>投稿を読み込めませんでした。</p>
+              <p>${escapeHTML(error.message)}</p>
+            </div>
+          </div>
+        `;
+        showToast(error.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+
+      const username = usernameInput.value.trim() || '匿名ユーザー';
+      const category = categorySelect.value;
+      const message = messageInput.value.trim();
+
+      if (!message) {
+        showToast('メッセージを入力してください。', 'error');
+        return;
+      }
+
+      submitButton.disabled = true;
+      try {
+        await fetchJson({
+          mode: 'create',
+          username,
+          category,
+          message
+        });
+
+        messageInput.value = '';
+        showToast('スプレッドシートへ投稿しました。', 'success');
+        await fetchPosts();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message, 'error');
+      } finally {
+        submitButton.disabled = false;
+      }
+    }
+
+    function handleFilterClick(event) {
+      const button = event.target.closest('.filter-button');
+      if (!button) return;
+
+      document.querySelectorAll('.filter-button').forEach((item) => {
+        item.classList.toggle('active', item === button);
+      });
+      state.filter = button.dataset.filter;
+      render();
+    }
+
+    window.likePost = async function likePost(id) {
+      if (state.likedPosts.has(id)) {
+        showToast('この投稿はすでにいいね済みです。', 'info');
+        return;
+      }
+
+      try {
+        const result = await fetchJson({ mode: 'like', id });
+        state.likedPosts.add(id);
+        localStorage.setItem('gas_board_liked_ids', JSON.stringify([...state.likedPosts]));
+
+        const post = state.posts.find((item) => item.id === id);
+        if (post) post.likes = Number(result.likes) || post.likes + 1;
+
+        render();
+      } catch (error) {
+        console.error(error);
+        showToast(error.message, 'error');
+      }
+    };
+
+    window.deletePost = async function deletePost(id) {
+      if (!confirm('この投稿を削除しますか？')) return;
+
+      try {
+        await fetchJson({ mode: 'delete', id });
+        state.posts = state.posts.filter((post) => post.id !== id);
+        state.likedPosts.delete(id);
+        localStorage.setItem('gas_board_liked_ids', JSON.stringify([...state.likedPosts]));
+        render();
+        showToast('投稿を削除しました。', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast(error.message, 'error');
+      }
+    };
+
+    window.simplifyPost = async function simplifyPost(id) {
+      if (state.simplifying.has(id)) return;
+      if (state.simplified[id]) return;
+
+      state.simplifying.add(id);
+      render();
+
+      try {
+        const result = await fetchJson({ mode: 'simplify', id });
+        state.simplified[id] = result.simplified;
+        showToast('やさしい言葉に変換しました。', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast(error.message, 'error');
+      } finally {
+        state.simplifying.delete(id);
+        render();
+      }
+    };
+
+    function normalizePosts(posts) {
+      return posts
+        .map((post) => ({
+          id: String(post.id || ''),
+          username: String(post.username || '匿名ユーザー'),
+          category: categoryLabels[post.category] ? post.category : 'general',
+          message: String(post.message || ''),
+          timestamp: String(post.timestamp || ''),
+          likes: Number(post.likes) || 0
+        }))
+        .filter((post) => post.id && post.message)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }
+
+    function render() {
+      const posts = state.posts.filter((post) => {
+        return state.filter === 'all' || post.category === state.filter;
+      });
+
+      postCount.textContent = `${posts.length}件`;
+
+      if (state.isLoading) {
+        feed.innerHTML = '<div class="loading">読み込み中...</div>';
+        return;
+      }
+
+      if (posts.length === 0) {
+        feed.innerHTML = '<div class="empty">まだ投稿がありません。</div>';
+        lucide.createIcons();
+        return;
+      }
+
+      feed.innerHTML = posts.map((post) => {
+        const liked = state.likedPosts.has(post.id);
+        const isSimplifying = state.simplifying.has(post.id);
+        const hasSimplified = !!state.simplified[post.id];
+        return `
+          <article class="post">
+            <div class="post-header">
+              <div class="user">
+                <div class="username">${escapeHTML(post.username)}</div>
+                <div class="time">${formatDate(post.timestamp)}</div>
+              </div>
+              <span class="category ${post.category}">${categoryLabels[post.category]}</span>
+            </div>
+            <div class="message">${escapeHTML(post.message)}</div>
+            ${hasSimplified ? `
+              <div class="simplified-box">
+                <div class="simplified-header">
+                  <i data-lucide="sparkles"></i>
+                  <span>やさしい言葉</span>
+                </div>
+                <div class="simplified-content">${escapeHTML(state.simplified[post.id])}</div>
+              </div>
+            ` : ''}
+            <div class="post-actions">
+              <button type="button" class="action-button ${liked ? 'liked' : ''}" onclick="likePost('${escapeAttribute(post.id)}')" ${liked ? 'disabled' : ''}>
+                <i data-lucide="heart" ${liked ? 'fill="currentColor"' : ''}></i>
+                <span>${post.likes}</span>
+              </button>
+              <button type="button" class="action-button simplify-button" onclick="simplifyPost('${escapeAttribute(post.id)}')" ${isSimplifying || hasSimplified ? 'disabled' : ''}>
+                <i data-lucide="${isSimplifying ? 'loader-2' : 'sparkles'}" class="${isSimplifying ? 'spin' : ''}"></i>
+                <span>${isSimplifying ? '変換中...' : (hasSimplified ? '変換済み' : 'やさしい言葉に変換')}</span>
+              </button>
+              <button type="button" class="action-button delete-button" onclick="deletePost('${escapeAttribute(post.id)}')">
+                <i data-lucide="trash-2"></i>
+                削除
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function setLoading(isLoading) {
+      state.isLoading = isLoading;
+      refreshButton.disabled = isLoading;
+      if (isLoading) render();
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+
+      return date.toLocaleString('ja-JP', {
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function showToast(message, type = 'success') {
+      toastMessage.textContent = message;
+      toast.className = `toast show ${type}`;
+
+      const icon = toast.querySelector('i');
+      icon.setAttribute('data-lucide', type === 'error' ? 'circle-alert' : 'circle-check');
+      lucide.createIcons();
+
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
+    function escapeHTML(value) {
+      return String(value).replace(/[&<>'"]/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[char]));
+    }
+
+    function escapeAttribute(value) {
+      return escapeHTML(value).replace(/`/g, '&#96;');
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

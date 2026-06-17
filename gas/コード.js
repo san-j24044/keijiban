@@ -2,9 +2,11 @@ const SHEET_NAME = 'posts';
 
 function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(SHEET_NAME);
+  let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
-    throw new Error('Sheet "' + SHEET_NAME + '" not found. Please create it.');
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow(['id', 'username', 'category', 'message', 'timestamp', 'likes']);
+    sheet.getRange('A1:F1').setFontWeight('bold');
   }
   return sheet;
 }
@@ -167,13 +169,16 @@ function simplifyPost(params) {
 
 const callOpenRouter = (messages) => {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const settingsSheet = ss.getSheetByName('settings');
+  let settingsSheet = ss.getSheetByName('settings');
   if (!settingsSheet) {
-    throw new Error('Sheet "settings" not found.');
+    settingsSheet = ss.insertSheet('settings');
+    settingsSheet.getRange('A2').setValue('OpenRouter API Key');
+    settingsSheet.getRange('B2').setValue('');
+    throw new Error('スプレッドシートに「settings」シートを自動作成しました。B2セルにOpenRouterのAPIキー（openai/gpt-oss-120b:free 用）を入力してください。');
   }
   const apiKey = settingsSheet.getRange('B2').getValue();
   if (!apiKey) {
-    throw new Error('API Key is empty in "settings" sheet cell B2.');
+    throw new Error('「settings」シートのB2セルにOpenRouterのAPIキーを入力してください。');
   }
 
   const model = 'openai/gpt-oss-120b:free';
