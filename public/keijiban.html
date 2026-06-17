@@ -343,6 +343,15 @@
       font-weight: 700;
     }
 
+    .simplify-button {
+      color: #86efac;
+      font-weight: 700;
+    }
+
+    .simplify-button:hover:not(:disabled) {
+      color: #bbf7d0;
+    }
+
     .delete-button:hover:not(:disabled) {
       color: var(--danger);
     }
@@ -553,7 +562,7 @@
     const toastMessage = document.getElementById('toast-message');
 
     function init() {
-      lucide.createIcons();
+      createIcons();
 
       postForm.addEventListener('submit', handleSubmit);
       refreshButton.addEventListener('click', fetchPosts);
@@ -732,7 +741,7 @@
 
       if (posts.length === 0) {
         feed.innerHTML = '<div class="empty">まだ投稿がありません。</div>';
-        lucide.createIcons();
+        createIcons();
         return;
       }
 
@@ -777,7 +786,7 @@
         `;
       }).join('');
 
-      lucide.createIcons();
+      createIcons();
     }
 
     function setLoading(isLoading) {
@@ -804,12 +813,18 @@
 
       const icon = toast.querySelector('i');
       icon.setAttribute('data-lucide', type === 'error' ? 'circle-alert' : 'circle-check');
-      lucide.createIcons();
+      createIcons();
 
       window.clearTimeout(showToast.timer);
       showToast.timer = window.setTimeout(() => {
         toast.classList.remove('show');
       }, 3200);
+    }
+
+    function createIcons() {
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
     }
 
     function escapeHTML(value) {
