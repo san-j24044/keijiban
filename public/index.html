@@ -170,7 +170,13 @@
       box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
     }
 
-    .submit-button {
+    .form-actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .submit-button,
+    .draft-simplify-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -184,12 +190,25 @@
       font-weight: 700;
     }
 
+    .draft-simplify-button {
+      border: 1px solid rgba(34, 197, 94, 0.45);
+      background: rgba(34, 197, 94, 0.14);
+      color: #bbf7d0;
+    }
+
     .submit-button:hover:not(:disabled) {
       background: var(--accent-strong);
       color: white;
     }
 
+    .draft-simplify-button:hover:not(:disabled) {
+      border-color: rgba(34, 197, 94, 0.78);
+      background: rgba(34, 197, 94, 0.24);
+      color: #dcfce7;
+    }
+
     .submit-button:disabled,
+    .draft-simplify-button:disabled,
     .refresh-button:disabled,
     .action-button:disabled {
       cursor: not-allowed;
@@ -494,10 +513,17 @@
             <textarea id="message" maxlength="500" placeholder="メッセージを入力してください" required></textarea>
           </div>
 
-          <button type="submit" class="submit-button" id="submit-button">
-            <i data-lucide="send"></i>
-            スプレッドシートへ投稿
-          </button>
+          <div class="form-actions">
+            <button type="button" class="draft-simplify-button" id="simplify-draft-button">
+              <i data-lucide="sparkles"></i>
+              やさしい言葉に変換
+            </button>
+
+            <button type="submit" class="submit-button" id="submit-button">
+              <i data-lucide="send"></i>
+              スプレッドシートへ投稿
+            </button>
+          </div>
         </form>
       </section>
 
@@ -553,6 +579,7 @@
     const usernameInput = document.getElementById('username');
     const categorySelect = document.getElementById('category');
     const messageInput = document.getElementById('message');
+    const simplifyDraftButton = document.getElementById('simplify-draft-button');
     const submitButton = document.getElementById('submit-button');
     const refreshButton = document.getElementById('refresh-button');
     const filters = document.getElementById('filters');
@@ -565,6 +592,7 @@
       createIcons();
 
       postForm.addEventListener('submit', handleSubmit);
+      simplifyDraftButton.addEventListener('click', handleSimplifyDraft);
       refreshButton.addEventListener('click', fetchPosts);
       filters.addEventListener('click', handleFilterClick);
 
@@ -642,6 +670,30 @@
         showToast(error.message, 'error');
       } finally {
         submitButton.disabled = false;
+      }
+    }
+
+    async function handleSimplifyDraft() {
+      const message = messageInput.value.trim();
+
+      if (!message) {
+        showToast('変換したいメッセージを入力してください。', 'error');
+        return;
+      }
+
+      simplifyDraftButton.disabled = true;
+      try {
+        const result = await fetchJson({
+          mode: 'simplifyText',
+          message
+        });
+        messageInput.value = result.simplified || message;
+        showToast('やさしい言葉に変換しました。', 'success');
+      } catch (error) {
+        console.error(error);
+        showToast(error.message, 'error');
+      } finally {
+        simplifyDraftButton.disabled = false;
       }
     }
 

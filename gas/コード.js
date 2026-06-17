@@ -39,6 +39,8 @@ function doGet(e) {
       response = deletePost(params);
     } else if (mode === 'simplify') {
       response = simplifyPost(params);
+    } else if (mode === 'simplifyText') {
+      response = simplifyText(params);
     } else {
       response.error = 'Invalid mode: ' + mode;
     }
@@ -162,13 +164,21 @@ function simplifyPost(params) {
     return { success: false, error: 'Post with ID ' + id + ' not found.' };
   }
 
-  // 利用元で変数宣言
-  const messages = [
-    { role: 'system', content: 'あなたは入力された文章を、小学生でも理解できるような「やさしい日本語」に変換するAIアシスタントです。漢字にはなるべくフリガナ（ひらがな）を付け、難しい言葉は簡単な言葉に言い換えてください。出力は変換後の日本語文章のみにしてください。' },
-    { role: 'user', content: '本日の会議は15時から開始します。遅れないようにお願いします。' },
-    { role: 'assistant', content: 'きょうのミーティングは、ごご3じからはじまります。おわらないように、じかんまでにあつまってね。' },
-    { role: 'user', content: postMessage }
-  ];
+  return simplifyMessage(postMessage);
+}
+
+function simplifyText(params) {
+  const message = params.message;
+
+  if (!message) {
+    return { success: false, error: 'Message is required.' };
+  }
+
+  return simplifyMessage(message);
+}
+
+function simplifyMessage(message) {
+  const messages = buildSimplifyMessages(message);
 
   try {
     const simplifiedText = callOpenRouter(messages);
@@ -176,6 +186,15 @@ function simplifyPost(params) {
   } catch (err) {
     return { success: false, error: err.toString() };
   }
+}
+
+function buildSimplifyMessages(message) {
+  return [
+    { role: 'system', content: 'あなたは入力された文章を、小学生でも理解できるような「やさしい日本語」に変換するAIアシスタントです。漢字にはなるべくフリガナ（ひらがな）を付け、難しい言葉は簡単な言葉に言い換えてください。出力は変換後の日本語文章のみにしてください。' },
+    { role: 'user', content: '本日の会議は15時から開始します。遅れないようにお願いします。' },
+    { role: 'assistant', content: 'きょうのミーティングは、ごご3じからはじまります。おくれないように、じかんまでにあつまってね。' },
+    { role: 'user', content: message }
+  ];
 }
 
 const callOpenRouter = (messages) => {
