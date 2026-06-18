@@ -168,6 +168,7 @@ function simplifyPost(params) {
 }
 
 function simplifyText(params) {
+  params = params || {};
   const message = params.message;
 
   if (!message) {
@@ -175,6 +176,11 @@ function simplifyText(params) {
   }
 
   return simplifyMessage(message);
+}
+
+function authorizeOpenRouter() {
+  setup();
+  return simplifyMessage('本日の会議は15時から開始します。遅れないようにお願いします。');
 }
 
 function simplifyMessage(message) {

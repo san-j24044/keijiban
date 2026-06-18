@@ -614,9 +614,17 @@
 
       const result = await response.json();
       if (!result.success) {
-        throw new Error(result.error || 'GASで処理に失敗しました');
+        throw new Error(normalizeApiError(result.error));
       }
       return result;
+    }
+
+    function normalizeApiError(error) {
+      const message = String(error || '');
+      if (message.includes('UrlFetchApp.fetch') && message.includes('権限')) {
+        return 'GASの外部通信権限が未承認です。Apps Scriptで権限を承認してから、もう一度変換してください。';
+      }
+      return message || 'GASで処理に失敗しました';
     }
 
     async function fetchPosts() {
